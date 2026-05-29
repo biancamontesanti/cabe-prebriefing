@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preload" href="assets/backdrop.mp4" as="video" type="video/mp4" fetchpriority="high" />
+  <title>Antonio Azzolino Design Studio</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --text: #f7f5ee;
+      --muted: rgba(247, 245, 238, 0.74);
+      --line: rgba(247, 245, 238, 0.2);
+      --button: #f7f5ee;
+      --button-text: #101214;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      overflow-x: hidden;
+      background: #101214;
+      color: var(--text);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100svh;
+      isolation: isolate;
+      overflow: hidden;
+    }
+
+    .source-video,
+    .pixel-canvas,
+    .shade,
+    .grain {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .source-video {
+      object-fit: cover;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pixel-canvas {
+      z-index: 1;
+      background: #101214;
+    }
+
+    .shade {
+      z-index: 2;
+      pointer-events: none;
+      background: transparent;
+    }
+
+    .grain {
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.16;
+      mix-blend-mode: overlay;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 4px 4px;
+    }
+
+    .language-toggle {
+      position: fixed;
+      top: clamp(16px, 3vw, 28px);
+      right: clamp(16px, 3vw, 32px);
+      z-index: 20;
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid rgba(247, 245, 238, 0.28);
+      border-radius: 999px;
+      background: rgba(16, 18, 20, 0.42);
+      backdrop-filter: blur(14px);
+    }
+
+    .language-toggle button {
+      min-width: 42px;
+      min-height: 30px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: rgba(247, 245, 238, 0.62);
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .language-toggle button[aria-pressed="true"] {
+      background: rgba(247, 245, 238, 0.92);
+      color: #101214;
+    }
+
+    .content {
+      position: relative;
+      z-index: 4;
+      display: grid;
+      min-height: 100%;
+      place-items: center;
+      padding: clamp(24px, 6vw, 72px);
+      text-align: center;
+    }
+
+    .copy {
+      width: min(1180px, 100%);
+    }
+
+    .phrase-stage {
+      position: relative;
+      display: grid;
+      width: min(1080px, 86vw);
+      min-height: clamp(120px, 16vw, 210px);
+      place-items: center;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 2;
+      margin: 0;
+      max-width: 100%;
+      overflow: visible;
+      white-space: nowrap;
+      font-size: clamp(26px, 5.8vw, 86px);
+      font-weight: 600;
+      line-height: 0.92;
+      letter-spacing: 0;
+      text-align: center;
+      text-transform: uppercase;
+      text-shadow: 0 4px 32px rgba(0, 0, 0, 0.72);
+      transition: opacity 240ms ease;
+      will-change: opacity;
+    }
+
+    h1::before,
+    h1::after {
+      display: none;
+    }
+
+    .studio-signature {
+      position: absolute;
+      left: clamp(20px, 4vw, 54px);
+      bottom: clamp(20px, 4vw, 42px);
+      z-index: 5;
+      color: rgba(247, 245, 238, 0.78);
+      font-size: clamp(12px, 1.15vw, 15px);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+
+    .scroll-cue {
+      position: absolute;
+      right: clamp(20px, 4vw, 54px);
+      bottom: clamp(20px, 4vw, 42px);
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(247, 245, 238, 0.72);
+      font-size: clamp(11px, 1vw, 13px);
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .scroll-cue::after {
+      width: 7px;
+      height: 7px;
+      border-right: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      content: "";
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .bio-section {
+      display: grid;
+      min-height: 100svh;
+      align-items: center;
+      padding: clamp(72px, 10vw, 140px) clamp(24px, 7vw, 92px);
+      background:
+        linear-gradient(180deg, #101214, #151514 46%, #101214),
+        radial-gradient(circle at 22% 44%, rgba(247, 245, 238, 0.08), transparent 36%);
+      color: var(--text);
+    }
+
+    .bio-inner {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    .bio-kicker {
+      margin: 0 0 clamp(24px, 4vw, 42px);
+      color: rgba(247, 245, 238, 0.54);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .bio-title {
+      margin: 0;
+      font-size: clamp(38px, 7.2vw, 104px);
+      font-weight: 500;
+      line-height: 0.92;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .bio-text {
+      width: min(760px, 100%);
+      margin: clamp(28px, 5vw, 56px) 0 0 auto;
+      color: rgba(247, 245, 238, 0.78);
+      font-size: clamp(16px, 1.65vw, 23px);
+      font-weight: 400;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .bio-next {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: clamp(22px, 4vw, 42px);
+      color: rgba(247, 245, 238, 0.66);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .bio-next::after {
+      width: 7px;
+      height: 7px;
+      border-right: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      content: "";
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .bio-social {
+      display: flex;
+      width: fit-content;
+      margin: clamp(10px, 1.4vw, 16px) 0 0 auto;
+      color: rgba(247, 245, 238, 0.9);
+      font-size: clamp(14px, 1.25vw, 18px);
+      font-weight: 500;
+      letter-spacing: 0;
+      text-decoration: none;
+    }
+
+    .bio-social:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.22em;
+    }
+
+    .demo-preview {
+      position: relative;
+      min-height: 100svh;
+      overflow: hidden;
+      background: #101214;
+      color: var(--text);
+    }
+
+    .demo-canvas,
+    .demo-shade {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .demo-canvas {
+      z-index: 1;
+    }
+
+    .demo-shade {
+      z-index: 2;
+      pointer-events: none;
+      background: transparent;
+    }
+
+    .demo-copy {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      min-height: 100svh;
+      align-items: end;
+      padding: clamp(32px, 7vw, 90px);
+    }
+
+    .demo-copy h2 {
+      width: min(720px, 100%);
+      margin: 0 0 clamp(18px, 3vw, 30px);
+      color: rgba(247, 245, 238, 0.94);
+      font-size: clamp(34px, 5vw, 76px);
+      font-weight: 500;
+      line-height: 0.92;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      text-shadow: 0 4px 34px rgba(0, 0, 0, 0.74);
+    }
+
+    .demo-copy p {
+      width: min(720px, 100%);
+      margin: 0;
+      color: rgba(247, 245, 238, 0.88);
+      font-size: clamp(18px, 2.6vw, 36px);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: 0;
+      text-wrap: balance;
+      text-shadow: 0 4px 34px rgba(0, 0, 0, 0.74);
+    }
+
+    .status {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 5;
+      width: min(480px, calc(100% - 32px));
+      translate: -50% 0;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
+      backdrop-filter: blur(16px);
+    }
+
+    .status[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 680px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .content {
+        align-items: center;
+        padding: 22px;
+      }
+
+      h1 {
+        font-size: clamp(20px, 6.8vw, 38px);
+      }
+
+      .phrase-stage {
+        width: min(100%, 84vw);
+        min-height: clamp(92px, 26vw, 150px);
+      }
+
+      .studio-signature,
+      .scroll-cue {
+        left: 50%;
+        right: auto;
+        width: calc(100% - 40px);
+        justify-content: center;
+        translate: -50% 0;
+        text-align: center;
+      }
+
+      .studio-signature {
+        bottom: 52px;
+        font-size: 11px;
+      }
+
+      .scroll-cue {
+        bottom: 20px;
+        font-size: 10px;
+      }
+
+      .bio-section {
+        padding: 72px 24px;
+      }
+
+      .bio-text {
+        margin-left: 0;
+        font-size: clamp(15px, 4.4vw, 20px);
+      }
+
+      .bio-social {
+        margin-left: 0;
+      }
+
+      .demo-copy {
+        align-items: center;
+        padding: 24px;
+      }
+
+      .demo-copy p {
+        font-size: clamp(18px, 5.5vw, 27px);
+        line-height: 1.12;
+      }
+
+      .demo-copy h2 {
+        font-size: clamp(34px, 11vw, 56px);
+      }
+
+      .language-toggle {
+        top: 14px;
+        right: 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      h1 {
+        animation: none;
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="language-toggle" aria-label="Language">
+    <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+    <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+
+  <main class="stage" aria-label="Antonio Azzolino Design Studio">
+    <video class="source-video" id="sourceVideo" autoplay muted loop playsinline preload="auto"></video>
+    <canvas class="pixel-canvas" id="pixelCanvas" aria-hidden="true"></canvas>
+    <div class="shade" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <section class="content">
+      <div class="copy">
+        <div class="phrase-stage" aria-live="polite" aria-atomic="true">
+          <h1 id="phraseText" data-text="Time Warp Stage Design">Time Warp Stage Design</h1>
+        </div>
+      </div>
+    </section>
+
+    <div class="studio-signature">Antonio Azzolino Design Studio</div>
+    <a class="scroll-cue" href="#bio">Scroll to who am I?</a>
+
+    <p class="status" id="status" hidden>
+      Tap or click once to start the video if your browser pauses autoplay.
+    </p>
+  </main>
+
+  <section class="bio-section" id="bio" aria-label="Who am I">
+    <div class="bio-inner">
+      <p class="bio-kicker">Who Am I?</p>
+      <h2 class="bio-title">Antonio Azzolino</h2>
+      <p class="bio-text">
+        A industrial designer and 3D artist with experience in developing scenography
+        and three-dimensional projects. His work combines aesthetic planning with
+        a practical understanding of essential factors such as lighting, textures,
+        and the flow of people. With ease in translating concepts into viable
+        projects, he has experience in prototyping with multiple materials to
+        ensure a precise, functional delivery that is perfectly suited to the
+        dynamics of a nightclub.
+      </p>
+      <a class="bio-social" href="https://www.instagram.com/antonioazzolino/" target="_blank"
+        rel="noreferrer">@antonioazzolino</a>
+      <a class="bio-next" href="#demo">Preview the demo</a>
+    </div>
+  </section>
+
+  <section class="demo-preview" id="demo" aria-label="Demo preview">
+    <canvas class="demo-canvas" id="demoCanvas" aria-hidden="true"></canvas>
+    <div class="demo-shade" aria-hidden="true"></div>
+    <div class="demo-copy">
+      <h2>Cave</h2>
+      <p>
+        A space designed to feel ancient, raw, and emotionally charged - a place
+        where brutalist materiality meets musical atmosphere, creating immersive
+        moments that feel unforgettable.
+      </p>
+    </div>
+  </section>
+
+  <script>
+    const video = document.querySelector("#sourceVideo");
+    const stage = document.querySelector(".stage");
+    const demoSection = document.querySelector("#demo");
+    const canvas = document.querySelector("#pixelCanvas");
+    const status = document.querySelector("#status");
+    const phraseText = document.querySelector("#phraseText");
+    const phraseStage = document.querySelector(".phrase-stage");
+    const scrollCue = document.querySelector(".scroll-cue");
+    const bioKicker = document.querySelector(".bio-kicker");
+    const bioText = document.querySelector(".bio-text");
+    const bioNext = document.querySelector(".bio-next");
+    const demoTitle = document.querySelector(".demo-copy h2");
+    const demoText = document.querySelector(".demo-copy p");
+    const languageButtons = document.querySelectorAll(".language-toggle button");
+    const demoCanvas = document.querySelector("#demoCanvas");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const demoCtx = demoCanvas.getContext("2d", { alpha: false });
+    const sample = document.createElement("canvas");
+    const sampleCtx = sample.getContext("2d", { alpha: false });
+    const demoSample = document.createElement("canvas");
+    const demoSampleCtx = demoSample.getContext("2d", { alpha: false });
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let cells = [];
+    let demoCells = [];
+    let lastPatternShift = 0;
+    let demoWidth = 0;
+    let demoHeight = 0;
+    let heroVisible = true;
+    let demoVisible = false;
+    let lastHeroFrame = 0;
+    let lastDemoFrame = 0;
+
+    const intensitySteps = [0.22, 0.42, 0.68, 0.9];
+    const clearCellRatio = 0.84;
+    const frameInterval = 1000 / 18;
+    const localVideo = "assets/backdrop.mp4";
+    const demoImageUrls = [
+      "assets/demo/a-mata5-1.jpg",
+      "assets/demo/a-mata3-2.jpg",
+      "assets/demo/a-mata2-1.jpg",
+      "assets/demo/a-mata3-1.jpg",
+      "assets/demo/a-mata1.jpg",
+      "assets/demo/amatacobre4.jpg",
+      "assets/demo/a-mata57.jpg",
+    ];
+    const copy = {
+      en: {
+        phrases: [
+          "Time Warp Stage Design",
+          "Interior Club Design",
+          "DJ Booth Design",
+          "Real World Fabrication",
+          "Manufacturing Expertise",
+        ],
+        scrollCue: "Scroll to who am I?",
+        bioKicker: "Who Am I?",
+        bioText:
+          "He is a spatial and 3D designer with experience in developing scenography and three-dimensional projects. His work combines aesthetic planning with a practical understanding of essential factors such as lighting, textures, and the flow of people. With ease in translating concepts into viable projects, he has experience in prototyping with multiple materials to ensure a precise, functional delivery that is perfectly suited to the dynamics of a nightclub.",
+        bioNext: "Preview the demo",
+        demoTitle: "CAVE",
+        demoText:
+          "A space designed to feel ancient, raw, and emotionally charged - a place where brutalist materiality meets musical atmosphere, creating immersive moments that feel unforgettable.",
+      },
+      pt: {
+        phrases: [
+          "Time Warp Stage Design",
+          "Interior Club Design",
+          "DJ Booth Design",
+          "Real World Fabrication",
+          "Manufacturing Expertise",
+        ],
+        scrollCue: "Role para quem sou eu",
+        bioKicker: "Quem Sou Eu?",
+        bioText:
+          "Designer industrial formado pela Belas Artes e artista 3D com experiência no desenvolvimento de cenografias e projetos tridimensionais. Seu trabalho combina planejamento estético com uma compreensão prática de fatores essenciais, como iluminação, texturas e fluxo de pessoas. Com facilidade para traduzir conceitos em projetos viáveis, tem experiência em prototipagem com múltiplos materiais para garantir uma entrega precisa, funcional e perfeitamente adequada à dinâmica de uma casa noturna.",
+        bioNext: "Ver o demo",
+        demoTitle: "CAVE",
+        demoText:
+          "Um espaço desenhado para parecer antigo, bruto e impactante — um lugar onde a materialidade brutalista encontra a atmosfera musical, criando momentos imersivos inesquecíveis.",
+      },
+    };
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let currentLanguage = "pt";
+    let phrases = copy[currentLanguage].phrases;
+    let longestPhrase = phrases.reduce((longest, phrase) =>
+      phrase.length > longest.length ? phrase : longest
+    );
+    let phraseIndex = 0;
+    video.src = localVideo;
+    const demoImages = demoImageUrls.map((src) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    });
+
+    function fitPhrase() {
+      const available = phraseStage.clientWidth * 0.94;
+      const currentText = phraseText.textContent;
+      const currentDataText = phraseText.dataset.text;
+      let size = Math.min(Math.max(window.innerWidth * 0.055, 22), 86);
+
+      phraseText.textContent = longestPhrase;
+      phraseText.dataset.text = longestPhrase;
+      phraseText.style.fontSize = `${size}px`;
+
+      while (phraseText.scrollWidth > available && size > 24) {
+        size -= 1;
+        phraseText.style.fontSize = `${size}px`;
+      }
+
+      phraseText.textContent = currentText;
+      phraseText.dataset.text = currentDataText;
+      phraseText.style.fontSize = `${size}px`;
+    }
+
+    function setPhrase(text, state) {
+      phraseText.textContent = text;
+      phraseText.dataset.text = text;
+      phraseText.className = state;
+      fitPhrase();
+    }
+
+    function applyLanguage(language) {
+      currentLanguage = language;
+      phrases = copy[currentLanguage].phrases;
+      longestPhrase = phrases.reduce((longest, phrase) =>
+        phrase.length > longest.length ? phrase : longest
+      );
+      phraseIndex = Math.min(phraseIndex, phrases.length - 1);
+
+      scrollCue.textContent = copy[currentLanguage].scrollCue;
+      bioKicker.textContent = copy[currentLanguage].bioKicker;
+      bioText.textContent = copy[currentLanguage].bioText;
+      bioNext.textContent = copy[currentLanguage].bioNext;
+      demoTitle.textContent = copy[currentLanguage].demoTitle;
+      demoText.textContent = copy[currentLanguage].demoText;
+      setPhrase(phrases[phraseIndex], "");
+
+      languageButtons.forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.lang === currentLanguage));
+      });
+    }
+
+    function rotatePhrase() {
+      const nextIndex = (phraseIndex + 1) % phrases.length;
+
+      if (reduceMotion) {
+        phraseIndex = nextIndex;
+        setPhrase(phrases[phraseIndex], "");
+        return;
+      }
+
+      phraseText.style.opacity = "0";
+      window.setTimeout(() => {
+        phraseIndex = nextIndex;
+        setPhrase(phrases[phraseIndex], "");
+        phraseText.style.opacity = "1";
+      }, 240);
+    }
+
+    applyLanguage(currentLanguage);
+    window.setInterval(rotatePhrase, 2600);
+
+    languageButtons.forEach((button) => {
+      button.addEventListener("click", () => applyLanguage(button.dataset.lang));
+    });
+
+    function coverCrop(sourceWidth, sourceHeight, targetWidth, targetHeight) {
+      const sourceRatio = sourceWidth / sourceHeight;
+      const targetRatio = targetWidth / targetHeight;
+
+      if (sourceRatio > targetRatio) {
+        const cropWidth = sourceHeight * targetRatio;
+        return {
+          sx: (sourceWidth - cropWidth) / 2,
+          sy: 0,
+          sw: cropWidth,
+          sh: sourceHeight,
+        };
+      }
+
+      const cropHeight = sourceWidth / targetRatio;
+      return {
+        sx: 0,
+        sy: (sourceHeight - cropHeight) / 2,
+        sw: sourceWidth,
+        sh: cropHeight,
+      };
+    }
+
+    function resize() {
+      dpr = 1;
+      width = Math.floor(window.innerWidth);
+      height = Math.floor(window.innerHeight);
+
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+
+      const cellSize = Math.max(72, Math.min(160, Math.floor(width / 10)));
+      const cols = Math.ceil(width / cellSize);
+      const rows = Math.ceil(height / cellSize);
+
+      cells = Array.from({ length: rows * cols }, (_, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const hash = Math.sin((col + 1) * 19.19 + (row + 1) * 47.31) * 10000;
+        const seed = hash - Math.floor(hash);
+
+        return {
+          x: col * cellSize,
+          y: row * cellSize,
+          w: Math.min(cellSize, width - col * cellSize),
+          h: Math.min(cellSize, height - row * cellSize),
+          col,
+          row,
+          phase: seed * Math.PI * 2,
+          speed: 0.55 + ((col * 7 + row * 11) % 9) * 0.08,
+          step: (col * 3 + row * 5) % intensitySteps.length,
+          maskMix: seed > clearCellRatio ? 1 : 0,
+          seed,
+        };
+      });
+
+      fitPhrase();
+      resizeDemo();
+    }
+
+    function resizeDemo() {
+      const bounds = demoCanvas.getBoundingClientRect();
+      demoWidth = Math.max(1, Math.floor(bounds.width));
+      demoHeight = Math.max(1, Math.floor(bounds.height));
+
+      demoCanvas.width = Math.floor(demoWidth * dpr);
+      demoCanvas.height = Math.floor(demoHeight * dpr);
+      demoCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      demoCtx.imageSmoothingEnabled = false;
+
+      const cellSize = Math.max(84, Math.min(180, Math.floor(demoWidth / 9)));
+      const cols = Math.ceil(demoWidth / cellSize);
+      const rows = Math.ceil(demoHeight / cellSize);
+
+      demoCells = Array.from({ length: rows * cols }, (_, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const hash = Math.sin((col + 3) * 23.17 + (row + 5) * 41.93) * 10000;
+        const seed = hash - Math.floor(hash);
+
+        return {
+          x: col * cellSize,
+          y: row * cellSize,
+          w: Math.min(cellSize, demoWidth - col * cellSize),
+          h: Math.min(cellSize, demoHeight - row * cellSize),
+          col,
+          row,
+          phase: seed * Math.PI * 2,
+          speed: 0.48 + ((col * 5 + row * 13) % 8) * 0.07,
+          step: (col * 2 + row * 7) % intensitySteps.length,
+          maskMix: seed > clearCellRatio ? 1 : 0,
+          seed,
+        };
+      });
+    }
+
+    function dynamicCellSeed(cell, time) {
+      const drift = time * 0.000015;
+      const field =
+        Math.sin(cell.col * 0.72 + drift + cell.phase * 0.35) +
+        Math.sin(cell.row * 0.86 - drift * 0.74 + cell.phase * 0.22) +
+        Math.sin((cell.col + cell.row) * 0.38 + drift * 0.52 + cell.seed * 6.28);
+
+      return (field / 3 + 1) / 2;
+    }
+
+    function demoRhythmSeed(cell, time) {
+      const beatLength = 750;
+      const beat = Math.floor(time / beatLength);
+      const beatProgress = (time % beatLength) / beatLength;
+      const pulse = Math.pow(Math.sin(beatProgress * Math.PI), 0.7);
+      const sequence =
+        Math.sin((cell.col + beat * 0.92) * 1.17 + cell.phase) +
+        Math.cos((cell.row - beat * 0.74) * 1.03 + cell.seed * 6.28) +
+        Math.sin((cell.col - cell.row + beat * 1.18) * 0.58);
+      const value = (sequence / 3 + 1) / 2;
+
+      return Math.max(0, Math.min(1, value + pulse * 0.18));
+    }
+
+    function drawPixelatedCell(cell, crop, level, time) {
+      const sx = crop.sx + (cell.x / width) * crop.sw;
+      const sy = crop.sy + (cell.y / height) * crop.sh;
+      const sw = (cell.w / width) * crop.sw;
+      const sh = (cell.h / height) * crop.sh;
+
+      if (level < 0.08) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(video, sx, sy, sw, sh, cell.x, cell.y, cell.w, cell.h);
+        ctx.imageSmoothingEnabled = false;
+        return;
+      }
+
+      const pixelCount = Math.max(1, Math.round(2 + (1 - level) * 12));
+      const aspect = cell.w / Math.max(cell.h, 1);
+      sample.width = Math.max(1, Math.round(pixelCount * aspect));
+      sample.height = Math.max(1, pixelCount);
+      sampleCtx.imageSmoothingEnabled = false;
+      sampleCtx.drawImage(video, sx, sy, sw, sh, 0, 0, sample.width, sample.height);
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sample, 0, 0, sample.width, sample.height, cell.x, cell.y, cell.w, cell.h);
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.02)";
+      ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+    }
+
+    function drawPixelatedImageCell(source, cell, crop, level, renderCtx, renderSample, renderSampleCtx) {
+      const sx = crop.sx + (cell.x / demoWidth) * crop.sw;
+      const sy = crop.sy + (cell.y / demoHeight) * crop.sh;
+      const sw = (cell.w / demoWidth) * crop.sw;
+      const sh = (cell.h / demoHeight) * crop.sh;
+
+      if (level < 0.08) {
+        renderCtx.imageSmoothingEnabled = true;
+        renderCtx.drawImage(source, sx, sy, sw, sh, cell.x, cell.y, cell.w, cell.h);
+        renderCtx.imageSmoothingEnabled = false;
+        return;
+      }
+
+      const pixelCount = Math.max(1, Math.round(2 + (1 - level) * 12));
+      const aspect = cell.w / Math.max(cell.h, 1);
+      renderSample.width = Math.max(1, Math.round(pixelCount * aspect));
+      renderSample.height = Math.max(1, pixelCount);
+      renderSampleCtx.imageSmoothingEnabled = false;
+      renderSampleCtx.drawImage(source, sx, sy, sw, sh, 0, 0, renderSample.width, renderSample.height);
+
+      renderCtx.imageSmoothingEnabled = false;
+      renderCtx.drawImage(
+        renderSample,
+        0,
+        0,
+        renderSample.width,
+        renderSample.height,
+        cell.x,
+        cell.y,
+        cell.w,
+        cell.h
+      );
+
+      renderCtx.fillStyle = "rgba(255, 255, 255, 0.02)";
+      renderCtx.fillRect(cell.x, cell.y, cell.w, cell.h);
+    }
+
+    function drawDemoImage(source, alpha, time) {
+      if (!source.complete || !source.naturalWidth || !demoWidth || !demoHeight) {
+        return;
+      }
+
+      const crop = coverCrop(source.naturalWidth, source.naturalHeight, demoWidth, demoHeight);
+      demoCtx.save();
+      demoCtx.globalAlpha = alpha;
+
+      demoCells.forEach((cell) => {
+        const mask = demoRhythmSeed(cell, time);
+        const centerX = (cell.x + cell.w / 2) / demoWidth - 0.5;
+        const centerY = (cell.y + cell.h / 2) / demoHeight - 0.5;
+        const distanceFromCenter = Math.hypot(centerX, centerY);
+        const centerAvoidance = Math.max(0, 1 - distanceFromCenter * 3.1);
+        const edgeBias = Math.min(0.28, distanceFromCenter * 0.38);
+        const targetMix = mask > clearCellRatio - edgeBias && centerAvoidance < 0.3 ? 1 : 0;
+        cell.maskMix += (targetMix - cell.maskMix) * 0.14;
+
+        const beatAccent = Math.pow(Math.sin(((time % 750) / 750) * Math.PI), 0.7);
+        const rhythmicStep = (cell.step + Math.floor(time / 750)) % intensitySteps.length;
+        const level =
+          cell.maskMix < 0.02
+            ? 0
+            : Math.min(0.96, (intensitySteps[rhythmicStep] + beatAccent * 0.18) * cell.maskMix);
+        drawPixelatedImageCell(source, cell, crop, level, demoCtx, demoSample, demoSampleCtx);
+      });
+
+      demoCtx.restore();
+    }
+
+    function hasVideoBuffer(seconds = 0.75) {
+      if (!video.buffered.length || !Number.isFinite(video.currentTime)) {
+        return false;
+      }
+
+      for (let index = 0; index < video.buffered.length; index += 1) {
+        if (
+          video.buffered.start(index) <= video.currentTime &&
+          video.buffered.end(index) - video.currentTime >= seconds
+        ) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function renderDemo(time) {
+      if (!demoVisible || time - lastDemoFrame < frameInterval) {
+        return;
+      }
+
+      lastDemoFrame = time;
+
+      if (!demoWidth || !demoHeight) {
+        return;
+      }
+
+      const readyImages = demoImages.filter((image) => image.complete && image.naturalWidth);
+      demoCtx.clearRect(0, 0, demoWidth, demoHeight);
+
+      if (!readyImages.length) {
+        demoCtx.fillStyle = "#101214";
+        demoCtx.fillRect(0, 0, demoWidth, demoHeight);
+        return;
+      }
+
+      const slideDuration = 5200;
+      const fadeDuration = 1200;
+      const position = (time % (readyImages.length * slideDuration)) / slideDuration;
+      const currentIndex = Math.floor(position);
+      const nextIndex = (currentIndex + 1) % readyImages.length;
+      const local = (position - currentIndex) * slideDuration;
+      const fade = Math.max(0, Math.min(1, (local - (slideDuration - fadeDuration)) / fadeDuration));
+
+      drawDemoImage(readyImages[currentIndex], 1, time);
+      if (fade > 0) {
+        drawDemoImage(readyImages[nextIndex], fade, time);
+      }
+
+      demoCtx.strokeStyle = "rgba(255,255,255,0.05)";
+      demoCtx.lineWidth = 1;
+      demoCells.forEach((cell) => demoCtx.strokeRect(cell.x + 0.5, cell.y + 0.5, cell.w, cell.h));
+    }
+
+    function render(time = 0) {
+      if (
+        heroVisible &&
+        time - lastHeroFrame >= frameInterval &&
+        video.readyState >= 3 &&
+        hasVideoBuffer() &&
+        video.videoWidth &&
+        video.videoHeight
+      ) {
+        lastHeroFrame = time;
+        const crop = coverCrop(video.videoWidth, video.videoHeight, width, height);
+        ctx.clearRect(0, 0, width, height);
+
+        cells.forEach((cell, index) => {
+          const mask = dynamicCellSeed(cell, time);
+          const centerX = (cell.x + cell.w / 2) / width - 0.5;
+          const centerY = (cell.y + cell.h / 2) / height - 0.5;
+          const centerBias = Math.max(0, 1 - Math.hypot(centerX, centerY) * 2.8) * 0.2;
+          const targetMix = mask > clearCellRatio - centerBias ? 1 : 0;
+          cell.maskMix += (targetMix - cell.maskMix) * 0.004;
+
+          const level = cell.maskMix < 0.02 ? 0 : intensitySteps[cell.step] * cell.maskMix;
+          drawPixelatedCell(cell, crop, level, time);
+        });
+
+        ctx.strokeStyle = "rgba(255,255,255,0.055)";
+        ctx.lineWidth = 1;
+        cells.forEach((cell) => ctx.strokeRect(cell.x + 0.5, cell.y + 0.5, cell.w, cell.h));
+      }
+
+      renderDemo(time);
+      requestAnimationFrame(render);
+    }
+
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === stage) {
+            heroVisible = entry.isIntersecting;
+          }
+
+          if (entry.target === demoSection) {
+            demoVisible = entry.isIntersecting;
+          }
+        });
+      },
+      { threshold: 0.05 }
+    );
+
+    visibilityObserver.observe(stage);
+    visibilityObserver.observe(demoSection);
+
+    async function tryPlay() {
+      try {
+        await video.play();
+        status.hidden = true;
+      } catch {
+        status.hidden = false;
+      }
+    }
+
+    window.addEventListener("resize", resize, { passive: true });
+    window.addEventListener("pointerdown", tryPlay, { once: true });
+    video.addEventListener("loadedmetadata", resize);
+    video.addEventListener("canplay", tryPlay);
+    video.addEventListener("error", () => {
+      status.hidden = false;
+      status.textContent =
+        "The local video could not be loaded. Check that assets/backdrop.mp4 is included.";
+    });
+
+    resize();
+    render();
+    tryPlay();
+  </script>
+</body>
+
+</html>
